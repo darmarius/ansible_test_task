@@ -1,0 +1,20 @@
+---
+- name: Install PHP7-FPM
+  apt:
+    name: "{{ item }}"
+    state: latest
+    update_cache: yes
+  with_items: "{{ php_pkgs }}"
+
+- name: Copy config files
+  template:
+    src: 'www.conf'
+    dest: '/etc/php/7.0/fpm/pool.d/www.conf'
+    owner: root
+    group: root
+  
+- name: Restart PHP7-FPM
+  service:
+    name: php7.0-fpm
+    state: restarted
+

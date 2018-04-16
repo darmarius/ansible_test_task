@@ -1,0 +1,12 @@
+---
+- hosts: server
+  become: yes
+  gather_facts: yes
+  roles:
+    - common
+    - nginx
+    - mysql
+    - php
+    - wordpress
+ 
+

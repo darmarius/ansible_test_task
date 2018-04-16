@@ -1,0 +1,88 @@
+--- 
+- name: Delete the html directory
+  file:
+    path: "/var/www/html"
+    state: absent
+    recurse: no
+  ignore_errors: yes
+ 
+- name: Check if DB exists
+  shell: "mysql -e 'SHOW DATABASES;' | grep {{ wordpress_db }}"
+  register: dbstatus
+  ignore_errors: yes
+ 
+- name: "Create {{ wordpress_db }} DB"
+  mysql_db:
+    name: "{{ wordpress_db }}"
+    encoding: utf8
+    collation: utf8_general_ci
+    state: present
+  when: dbstatus.rc != 0
+
+- name: Create the DB user for wordpress
+  mysql_user:
+    name: "{{ wordpress_user }}"
+    password: "{{ wordpress_passwd }}"
+    priv: "{{ wordpress_db }}.*:ALL"
+    state: present
+
+- name: "Create wordpress directory at {{ wordpress_dir }}"
+  file:
+    state: directory
+    path: "{{ wordpress_dir }}" 
+    owner: www-data
+    group: www-data
+    mode: 0755
+    recurse: yes
+ 
+
+- name: Download the latest wordpress
+  get_url:
+    url: "{{ wordpress_url }}"
+    dest: "{{ wordpress_dir }}/latest.tar.gz"
+ 
+- name: Unzip wordpress
+  unarchive:
+    src: "{{ wordpress_dir }}/latest.tar.gz"
+    dest: "{{ wordpress_dir }}"
+    copy: no
+
+- name: "Rename wordpress directory as {{ wordpress_name }}"
+  command: "mv wordpress {{ wordpress_name }}"
+  args:
+    chdir: "{{ wordpress_dir }}"
+    creates: "{{ wordpress_dir }}/{{ wordpress_name }}"
+  register: dir_rename
+
+- name: Copy wp-config.php file 
+  template:
+    src: wp-config.php
+    dest: "{{ wordpress_dir }}/{{ wordpress_name }}/wp-config.php"
+  when: dir_rename.changed
+
+- name: Reset the permission on Website directory
+  file:
+    state: directory
+    path: "{{ wordpress_dir }}/{{ wordpress_name }}"
+    owner: www-data
+    group: www-data
+    recurse: yes
+ 
+- name: "Add the {{ wordpress_name }} config"
+  template:
+    src: default.conf
+    dest: "/etc/nginx/sites-available/default"
+    owner: root
+    group: root
+
+
+- name: "Enable {{ wordpress_name }}"
+  file:
+    src: "/etc/nginx/sites-available/default"
+    dest: "/etc/nginx/sites-enabled/{{ wordpress_name }}"
+    state: link
+
+- name: Restart Nginx
+  service:
+    name: nginx
+    state: restarted

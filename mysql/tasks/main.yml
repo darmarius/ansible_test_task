@@ -1,0 +1,68 @@
+---
+
+- name: Add mysql repo key
+  apt_key:
+    file: RPM-GPG-KEY-mysql
+    state: present
+
+- name: Add Mysql repo
+  apt_repository: 
+   repo: "{{ item }}"
+   state: present
+  with_items: "{{ mysql_repo }}"
+
+- name: Install MySQL
+  apt:
+    name: "{{ item }}"
+    state: installed
+    update_cache: yes
+  with_items:
+    - mysql-community-server
+    - mysql-community-client
+    - python-mysqldb
+    - libmysqlclient-dev
+
+- name: Set MySQL root password
+  mysql_user:
+    name: root
+    host: "{{ item }}"
+    password: "{{ mysql_root_pass }}"
+    state: present
+  with_items:
+    - "{{ ansible_hostname }}"
+    - 127.0.0.1
+    - ::1
+    - localhost
+
+- name: Copy config files
+  template:
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+    owner: root 
+    group: root 
+    mode: "{{ item.mode | default(644) }}"
+  with_items:
+    - { src: 'my.cnf', dest: '/etc/mysql/my.cnf' }
+    - { src: 'root.cnf', dest: '~/.my.cnf', mode: '600' }
+  notify:
+    - Restart MySQL
+
+- name: Delete Anonymous users
+  mysql_user:
+    name: ''
+    host: "{{ item }}"
+    state: absent
+  with_items:
+    - localhost
+    - "{{ ansible_hostname }}"
+ 
+- name: Remove test database
+  mysql_db:
+    name: test
+    state: absent
+
+- name: Restart MySQL
+  service:
+    name: mysql
+    state: restarted
+

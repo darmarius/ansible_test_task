@@ -1,0 +1,52 @@
+---
+- name: Update system
+  apt: 
+    update_cache: yes
+ 
+- name: Install iotop
+  apt:
+    name: iotop
+    state: latest
+
+- name: Install mc
+  apt:
+    name: mc
+    state: latest
+
+- name: Install ntp
+  apt:
+    name: ntp
+    state: latest
+
+- name: Set hostname
+  hostname:
+    name: "{{ common_hostname }}"
+
+- name: Update /etc/hosts
+  lineinfile:
+    dest: /etc/hosts 
+    regexp: "^{{ common_default_ip }}" 
+    line: "{{ common_default_ip }}    {{ common_fqdn }}    {{ common_hostname }}" 
+    state: present
+
+- name: Check the Current Timezone
+  command: cat /etc/timezone
+  changed_when: no
+  register: _current_timezone
+
+- name: Set the provided Timezone
+  copy: 
+    content: "{{ common_timezone }}" 
+    dest: /etc/timezone
+    owner: root
+    group: root
+    mode: 0644
+    backup: yes
+  when: "_current_timezone.stdout != '{{ common_timezone }}'"
+  register: _set_timezone
+
+- name: Update Timezone
+  command: dpkg-reconfigure --frontend noninteractive tzdata
+  when: _set_timezone.changed
+
+
