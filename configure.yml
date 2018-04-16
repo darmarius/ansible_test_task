@@ -3,10 +3,77 @@
   become: yes
   gather_facts: yes
   roles:
-    - common
-    - nginx
-    - mysql
-    - php
-    - wordpress
+    - { role: common, tags: common }
+    - { role: nginx, tags: nginx }
+    - { role: mysql, tags: mysql }
+    - { role: php, tags: php }
+    - { role: wordpress, tags: wordpress }
+  vars:
+   ansible_user: wpu
+   ansible_password: 123
+   ansible_sudo_pass: 123
+   #Role common
+   common_apps:
+    - mc
+    - iotop
+    - atop
+    - htop
+    - git
+    - ntp
+    - cron
+    - curl
+   common_default_ip: 127.0.1.1 		#IP address of the server
+   common_hostname: wordpresstest   	#Hostname of the Linux Server
+   common_domain: net      		#Domain name that will be used in fqdn
+   common_fqdn: "{{ common_hostname }}.{{ common_domain }}" #FQDN
+   common_timezone: "Europe/Minsk"  	# Timezone Setting
+ 
+   #Role nginx
+   nginx_connections: 1024 		#Max worker_connections for Nginx
+ 
+   #Role mysql
+   mysql_port: 3306 
+   mysql_bind_address: "127.0.0.1" 
+   mysql_root_pass: 123 
+   mysql_pkgs:
+    - mysql-server
+    - mysql-client
+    - python-mysqldb
+    - libmysqlclient-dev
+   mysql_version: 5.6			#Mysql version for install			
+   mysql_repo:
+    - deb http://repo.mysql.com/apt/debian/ stretch mysql-apt-config
+    - deb http://repo.mysql.com/apt/debian/ stretch mysql-{{ mysql_version }}
+    - deb http://repo.mysql.com/apt/debian/ stretch mysql-tools
+    - deb-src http://repo.mysql.com/apt/debian/ stretch mysql-{{ mysql_version }}
+ 
+   #Role php
+   php_pkgs:
+    - php7.0-common
+    - php7.0-cli
+    - php7.0-dev
+    - php7.0-fpm
+    - libpcre3-dev
+    - php7.0-gd
+    - php7.0-curl
+    - php7.0-imap
+    - php7.0-json
+    - php7.0-opcache
+    - php7.0-xml
+    - php7.0-mbstring
+    - php-sqlite3
+    - php7.0-mysql
+    - php-apcu
+ 
+   #Role wordpress
+   wordpress_name: "{{ common_fqdn }}"			#Wordpress website name 
+   wordpress_dir: /var/www 	     			#Wordpress directory for install
+   wordpress_url: http://wordpress.org/latest.tar.gz	#URL for wordpress's download
+   wordpress_user: wpsu
+   wordpress_passwd: 123
+   wordpress_db: wpdatabase
+
+
+
  
 

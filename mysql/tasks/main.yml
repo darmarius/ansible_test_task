@@ -2,8 +2,7 @@
 
 - name: Add mysql repo key
   apt_key:
-    file: RPM-GPG-KEY-mysql
-    state: present
+    url: http://repo.mysql.com/RPM-GPG-KEY-mysql
 
 - name: Add Mysql repo
   apt_repository: 
@@ -44,8 +43,6 @@
   with_items:
     - { src: 'my.cnf', dest: '/etc/mysql/my.cnf' }
     - { src: 'root.cnf', dest: '~/.my.cnf', mode: '600' }
-  notify:
-    - Restart MySQL
 
 - name: Delete Anonymous users
   mysql_user:

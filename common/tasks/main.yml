@@ -3,21 +3,12 @@
   apt: 
     update_cache: yes
  
-- name: Install iotop
+- name: Install apps
   apt:
-    name: iotop
+    name: "{{ item }}"
     state: latest
-
-- name: Install mc
-  apt:
-    name: mc
-    state: latest
-
-- name: Install ntp
-  apt:
-    name: ntp
-    state: latest
-
+  with_items: "{{ common_apps }}"
+  
 - name: Set hostname
   hostname:
     name: "{{ common_hostname }}"
